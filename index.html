@@ -1,0 +1,1503 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="/icon.png">
+    <title>Raskbind X — Payables Dashboard</title>
+    <style>
+        :root {
+            --brown: #2b1200;
+            --brown-mid: #3d1a00;
+            --orange: #e65100;
+            --orange-b: #FF6B00;
+            --cream: #F8F3EC;
+            --card: #FFFEFB;
+            --gold: #8a5a30;
+            --line: #EDE3D8;
+            --green: #2e7d32;
+            --red: #c62828;
+            --blue: #1565c0;
+            --shadow: 0 4px 20px rgba(43, 18, 0, .08);
+            --shadow-lg: 0 12px 40px rgba(43, 18, 0, .14);
+            --radius: 14px;
+            --radius-sm: 9px;
+            --ease: cubic-bezier(.4, 0, .2, 1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background: var(--cream);
+            color: var(--brown);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            min-height: 100vh;
+        }
+
+        input,
+        select,
+        textarea,
+        button {
+            font-family: inherit;
+        }
+
+        /* ── LOCK SCREEN ── */
+        #lockScreen {
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            background: linear-gradient(150deg, var(--brown) 0%, #6b2800 50%, var(--orange-b) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #lockScreen::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        }
+
+        .lock-box {
+            background: rgba(255, 255, 255, .97);
+            border-radius: 20px;
+            padding: 44px 40px 36px;
+            width: 100%;
+            max-width: 380px;
+            text-align: center;
+            box-shadow: 0 30px 80px rgba(0, 0, 0, .35);
+            position: relative;
+        }
+
+        .lock-brand {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+
+        .lock-logo-mark {
+            width: 56px;
+            height: 56px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, var(--orange), var(--orange-b));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: Georgia, serif;
+            font-size: 18px;
+            color: #fff;
+            font-weight: bold;
+            overflow: hidden;
+        }
+
+        .lock-logo-mark img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .lock-brand-name {
+            font-family: Georgia, serif;
+            font-size: 20px;
+            color: var(--brown-mid);
+            font-weight: normal;
+        }
+
+        .lock-tagline {
+            font-size: 11.5px;
+            color: var(--gold);
+            text-transform: uppercase;
+            letter-spacing: .08em;
+            margin-bottom: 30px;
+        }
+
+        .lock-divider {
+            height: 1px;
+            background: var(--line);
+            margin-bottom: 26px;
+        }
+
+        .lock-label {
+            display: block;
+            text-align: left;
+            font-size: 11.5px;
+            font-weight: 700;
+            color: var(--gold);
+            text-transform: uppercase;
+            letter-spacing: .07em;
+            margin-bottom: 8px;
+        }
+
+        .lock-input {
+            width: 100%;
+            border: 1.5px solid var(--line);
+            border-radius: 10px;
+            padding: 13px 16px;
+            font-size: 16px;
+            color: var(--brown);
+            letter-spacing: .12em;
+            text-align: center;
+            background: #faf7f3;
+            transition: border-color .2s, box-shadow .2s;
+            outline: none;
+        }
+
+        .lock-input:focus {
+            border-color: var(--orange);
+            box-shadow: 0 0 0 3px rgba(230, 81, 0, .12);
+        }
+
+        .lock-input.shake {
+            animation: shake .35s var(--ease);
+        }
+
+        @keyframes shake {
+
+            0%,
+            100% {
+                transform: translateX(0)
+            }
+
+            20% {
+                transform: translateX(-8px)
+            }
+
+            60% {
+                transform: translateX(8px)
+            }
+        }
+
+        .lock-error {
+            font-size: 12.5px;
+            color: var(--red);
+            margin-top: 10px;
+            min-height: 18px;
+            font-weight: 600;
+        }
+
+        .lock-btn {
+            width: 100%;
+            margin-top: 14px;
+            padding: 14px;
+            border: none;
+            border-radius: 10px;
+            background: linear-gradient(135deg, var(--orange), var(--orange-b));
+            color: #fff;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            letter-spacing: .04em;
+            transition: opacity .2s, transform .1s;
+        }
+
+        .lock-btn:hover {
+            opacity: .9;
+        }
+
+        .lock-btn:active {
+            transform: scale(.98);
+        }
+
+        .lock-btn:disabled {
+            opacity: .6;
+            cursor: default;
+        }
+
+        .lock-footer {
+            font-size: 11px;
+            color: #ccc;
+            margin-top: 22px;
+        }
+
+        /* ── DASHBOARD ── */
+        #dashboardApp {
+            display: none;
+        }
+
+        header {
+            background: linear-gradient(135deg, var(--brown), var(--orange) 55%, var(--orange-b));
+            padding: 28px 32px 24px;
+            color: #fff;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 20px rgba(0, 0, 0, .2);
+        }
+
+        header::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            background: repeating-linear-gradient(115deg, rgba(255, 255, 255, .04) 0 2px, transparent 2px 14px);
+        }
+
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .header-brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .header-logo {
+            width: 38px;
+            height: 38px;
+            border-radius: 9px;
+            background: rgba(255, 255, 255, .2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: Georgia, serif;
+            font-size: 15px;
+            font-weight: bold;
+            overflow: hidden;
+        }
+
+        .header-logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+            border-radius: 9px;
+        }
+
+        header h1 {
+            font-family: Georgia, serif;
+            font-size: 22px;
+            font-weight: normal;
+            letter-spacing: .2px;
+        }
+
+        header p.tag {
+            font-size: 12px;
+            opacity: .8;
+            margin-top: 2px;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .hdr-btn {
+            background: rgba(255, 255, 255, .14);
+            border: 1px solid rgba(255, 255, 255, .25);
+            border-radius: 8px;
+            padding: 7px 14px;
+            color: #fff;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background .2s;
+        }
+
+        .hdr-btn:hover {
+            background: rgba(255, 255, 255, .24);
+        }
+
+        .month-select {
+            background: rgba(255, 255, 255, .14);
+            border: 1px solid rgba(255, 255, 255, .25);
+            border-radius: 8px;
+            padding: 7px 14px;
+            color: #fff;
+            font-size: 12.5px;
+            font-weight: 600;
+            cursor: pointer;
+            appearance: none;
+            -webkit-appearance: none;
+        }
+
+        .month-select option {
+            color: var(--brown);
+        }
+
+        .finance-strip {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 12px;
+            margin-top: 20px;
+            position: relative;
+        }
+
+        .fin-card {
+            background: rgba(255, 255, 255, .11);
+            border: 1px solid rgba(255, 255, 255, .18);
+            border-radius: 10px;
+            padding: 13px 15px;
+            transition: background .2s;
+        }
+
+        .fin-card:hover {
+            background: rgba(255, 255, 255, .18);
+        }
+
+        .fin-card .lbl {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: .08em;
+            opacity: .75;
+        }
+
+        .fin-card .val {
+            font-family: Georgia, serif;
+            font-size: 19px;
+            margin-top: 3px;
+            font-weight: 600;
+        }
+
+        .fin-card.profit .val {
+            color: #b8f7c8;
+        }
+
+        .fin-card.warn .val {
+            color: #ffe2b8;
+        }
+
+        @media(max-width:900px) {
+            .finance-strip {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        @media(max-width:540px) {
+            .finance-strip {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        /* ── TOOLBAR ── */
+        .toolbar {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px 28px 0;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .toolbar input,
+        .toolbar select {
+            border: 1.5px solid var(--line);
+            background: #fff;
+            border-radius: 10px;
+            padding: 10px 14px;
+            font-size: 13px;
+            color: var(--brown);
+            transition: border-color .2s, box-shadow .2s;
+            outline: none;
+        }
+
+        .toolbar input:focus,
+        .toolbar select:focus {
+            border-color: var(--orange);
+            box-shadow: 0 0 0 3px rgba(230, 81, 0, .1);
+        }
+
+        .toolbar input {
+            flex: 1;
+            min-width: 160px;
+        }
+
+        #idSearch {
+            flex: 0 0 140px;
+            font-family: "SF Mono", Menlo, monospace;
+            text-transform: uppercase;
+            font-size: 12px;
+        }
+
+        .add-btn {
+            padding: 10px 18px;
+            background: linear-gradient(135deg, var(--orange), var(--orange-b));
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: opacity .2s, transform .1s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .add-btn:hover {
+            opacity: .9;
+        }
+
+        .add-btn:active {
+            transform: scale(.97);
+        }
+
+        main {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 22px 28px 80px;
+        }
+
+        .section-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: .09em;
+            color: var(--gold);
+            margin: 0 0 14px;
+            font-weight: 700;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 16px;
+        }
+
+        /* ── CARD ── */
+        .card {
+            background: var(--card);
+            border: 1px solid var(--line);
+            border-radius: var(--radius);
+            padding: 18px;
+            transition: box-shadow .2s var(--ease), transform .2s var(--ease);
+            position: relative;
+        }
+
+        .card:hover {
+            box-shadow: var(--shadow-lg);
+            transform: translateY(-2px);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .avatar {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: Georgia, serif;
+            font-size: 15px;
+            font-weight: bold;
+            color: #fff;
+            background-size: cover;
+            background-position: center;
+        }
+
+        .card-meta {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .card-name {
+            font-family: Georgia, serif;
+            font-size: 16px;
+            font-weight: normal;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .card-cat {
+            font-size: 10.5px;
+            text-transform: uppercase;
+            letter-spacing: .06em;
+            color: var(--gold);
+            margin-top: 1px;
+        }
+
+        .card-badges {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-shrink: 0;
+        }
+
+        .id-tag {
+            font-family: "SF Mono", Menlo, monospace;
+            font-size: 10px;
+            color: var(--orange);
+            background: #fff3e6;
+            border: 1px solid #ffd9b3;
+            border-radius: 5px;
+            padding: 2px 7px;
+            letter-spacing: .02em;
+        }
+
+        .pill {
+            font-size: 11px;
+            padding: 3px 10px;
+            border-radius: 999px;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        .pill.paid {
+            background: #e8f5e9;
+            color: var(--green);
+        }
+
+        .pill.pending {
+            background: #fff3e0;
+            color: var(--orange);
+        }
+
+        .pill.none {
+            background: #f1ece5;
+            color: var(--gold);
+        }
+
+        .acct-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-family: "SF Mono", Menlo, monospace;
+            font-size: 12.5px;
+            color: var(--brown);
+            background: #faf7f3;
+            border-radius: 8px;
+            padding: 8px 10px;
+            margin-bottom: 8px;
+        }
+
+        .reveal-btn {
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-size: 11px;
+            color: var(--orange);
+            font-weight: 700;
+            text-decoration: none;
+            margin-left: auto;
+        }
+
+        .pending-list {
+            margin-bottom: 8px;
+        }
+
+        .pending-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+            background: #fffbf5;
+            border: 1px solid #ffd9b3;
+            border-radius: 8px;
+            padding: 8px 10px;
+            margin-top: 6px;
+        }
+
+        .pending-info {
+            display: flex;
+            flex-direction: column;
+            gap: 1px;
+        }
+
+        .pending-info .pm {
+            font-size: 10.5px;
+            color: var(--gold);
+            text-transform: uppercase;
+            letter-spacing: .04em;
+        }
+
+        .pending-info .pa {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--brown-mid);
+        }
+
+        .details-panel {
+            margin-top: 10px;
+            border-top: 1px dashed var(--line);
+            padding-top: 10px;
+            display: none;
+        }
+
+        .details-panel.open {
+            display: block;
+        }
+
+        .d-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 3px 0;
+            font-size: 12.5px;
+        }
+
+        .d-row .dk {
+            color: var(--gold);
+        }
+
+        .hist-title {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: .07em;
+            font-weight: 700;
+            color: var(--gold);
+            margin: 10px 0 4px;
+        }
+
+        .hist-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            color: var(--brown-mid);
+            padding: 2px 0;
+        }
+
+        .card-actions {
+            display: flex;
+            gap: 7px;
+            margin-top: 12px;
+            padding-top: 10px;
+            border-top: 1px solid var(--line);
+        }
+
+        .btn {
+            border: none;
+            border-radius: 8px;
+            padding: 7px 12px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity .15s, transform .1s;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .btn:active {
+            transform: scale(.96);
+        }
+
+        .btn.primary {
+            background: linear-gradient(135deg, var(--orange), var(--orange-b));
+            color: #fff;
+        }
+
+        .btn.ghost {
+            background: #fff;
+            border: 1px solid var(--line);
+            color: var(--brown);
+        }
+
+        .btn.ghost:hover {
+            background: var(--cream);
+        }
+
+        .btn.danger {
+            background: #fff5f5;
+            border: 1px solid #ffcccc;
+            color: var(--red);
+        }
+
+        .btn.danger:hover {
+            background: #ffecec;
+        }
+
+        .btn.edit {
+            background: #e8f0fe;
+            border: 1px solid #c5d5fb;
+            color: var(--blue);
+        }
+
+        .btn.edit:hover {
+            background: #d2e3fc;
+        }
+
+        .btn.sm {
+            padding: 5px 10px;
+            font-size: 11px;
+        }
+
+        .empty {
+            text-align: center;
+            color: var(--gold);
+            padding: 60px 0;
+            font-size: 14px;
+        }
+
+        footer {
+            text-align: center;
+            padding: 24px;
+            font-size: 11.5px;
+            color: var(--gold);
+        }
+
+        /* ── MODAL BASE ── */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 1000;
+            background: rgba(43, 18, 0, .55);
+            backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity .25s var(--ease);
+        }
+
+        .modal-overlay.open {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .modal {
+            background: #fff;
+            border-radius: var(--radius);
+            padding: 32px;
+            width: 100%;
+            max-width: 480px;
+            box-shadow: var(--shadow-lg);
+            transform: translateY(20px) scale(.97);
+            transition: transform .25s var(--ease);
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-overlay.open .modal {
+            transform: translateY(0) scale(1);
+        }
+
+        .modal-title {
+            font-family: Georgia, serif;
+            font-size: 20px;
+            color: var(--brown-mid);
+            margin-bottom: 6px;
+            font-weight: normal;
+        }
+
+        .modal-sub {
+            font-size: 12.5px;
+            color: var(--gold);
+            margin-bottom: 22px;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 11.5px;
+            font-weight: 700;
+            color: var(--gold);
+            text-transform: uppercase;
+            letter-spacing: .06em;
+            margin-bottom: 6px;
+        }
+
+        .form-input,
+        .form-select {
+            width: 100%;
+            border: 1.5px solid var(--line);
+            border-radius: 9px;
+            padding: 10px 13px;
+            font-size: 14px;
+            color: var(--brown);
+            background: #faf7f3;
+            transition: border-color .2s, box-shadow .2s;
+            outline: none;
+        }
+
+        .form-input:focus,
+        .form-select:focus {
+            border-color: var(--orange);
+            box-shadow: 0 0 0 3px rgba(230, 81, 0, .1);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 22px;
+            justify-content: flex-end;
+        }
+
+        .modal-actions .btn {
+            padding: 10px 20px;
+            font-size: 13px;
+        }
+
+        .modal-error {
+            font-size: 12.5px;
+            color: var(--red);
+            margin-top: 8px;
+            font-weight: 600;
+            min-height: 18px;
+        }
+
+        /* ── ADMIN CONFIRM MODAL ── */
+        #adminModal .modal {
+            max-width: 360px;
+            text-align: center;
+        }
+
+        #adminModal .admin-icon {
+            font-size: 32px;
+            margin-bottom: 12px;
+        }
+
+        #adminModal .form-input {
+            text-align: center;
+            letter-spacing: .08em;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- ── LOCK SCREEN ── -->
+    <div id="lockScreen">
+        <div class="lock-box">
+            <div class="lock-brand">
+                <div class="lock-logo-mark" id="lockLogoMark">RX</div>
+                <div class="lock-brand-name">Raskbind X</div>
+            </div>
+            <p class="lock-tagline">Payables Dashboard · Restricted Access</p>
+            <div class="lock-divider"></div>
+            <label class="lock-label" for="passInput">Access Key</label>
+            <input class="lock-input" id="passInput" type="password" placeholder="••••••••" autocomplete="off"
+                maxlength="64">
+            <div class="lock-error" id="lockError"></div>
+            <button class="lock-btn" id="unlockBtn">Unlock Dashboard</button>
+            <p class="lock-footer">Authorised Raskbind X members only.</p>
+        </div>
+    </div>
+
+    <!-- ── DASHBOARD ── -->
+    <div id="dashboardApp">
+        <header>
+            <div class="header-top">
+                <div class="header-brand">
+                    <div class="header-logo" id="headerLogo">RX</div>
+                    <div>
+                        <h1>Raskbind X — Payables</h1>
+                        <p class="tag">Live financial dashboard · Google Sheets synced</p>
+                    </div>
+                </div>
+                <div class="header-right">
+                    <select id="monthBadge" class="month-select"></select>
+                    <button class="hdr-btn" id="lockOutBtn">🔒 Lock</button>
+                </div>
+            </div>
+            <div class="finance-strip">
+                <div class="fin-card">
+                    <div class="lbl">Revenue</div>
+                    <div class="val" id="statRevenue">—</div>
+                </div>
+                <div class="fin-card profit">
+                    <div class="lbl">Net Profit</div>
+                    <div class="val" id="statProfit">—</div>
+                </div>
+                <div class="fin-card">
+                    <div class="lbl">Margin</div>
+                    <div class="val" id="statMargin">—</div>
+                </div>
+                <div class="fin-card warn">
+                    <div class="lbl">Pending Payouts</div>
+                    <div class="val" id="statAmount">—</div>
+                </div>
+                <div class="fin-card profit">
+                    <div class="lbl">Paid This Month</div>
+                    <div class="val" id="statPaid">—</div>
+                </div>
+                <div class="fin-card">
+                    <div class="lbl">Left After Payouts</div>
+                    <div class="val" id="statRemaining">—</div>
+                </div>
+            </div>
+        </header>
+
+        <div class="toolbar">
+            <input id="idSearch" type="text" placeholder="Search ID...">
+            <input id="searchBox" type="text" placeholder="Search name...">
+            <select id="categoryFilter">
+                <option value="">All categories</option>
+                <option value="Founder">Founder</option>
+                <option value="Co-Founder">Co-Founder</option>
+                <option value="CoreMember">Core Member</option>
+                <option value="Employee">Employee</option>
+                <option value="Freelancer">Freelancer</option>
+                <option value="Investor">Investor</option>
+                <option value="EquityHolder">Equity Holder</option>
+                <option value="FriendFamily">Friend / Family</option>
+            </select>
+            <select id="statusFilter">
+                <option value="">All statuses</option>
+                <option value="Paid">Paid</option>
+                <option value="Pending">Pending</option>
+                <option value="No dues">No dues</option>
+            </select>
+            <button class="add-btn" id="addPersonBtn">＋ Add Person</button>
+        </div>
+
+        <main>
+            <p class="section-label" id="countLabel">People Directory</p>
+            <div class="grid" id="peopleGrid"></div>
+            <div class="empty" id="emptyState" style="display:none;">No matching people found.</div>
+        </main>
+        <footer>Raskbind X internal tool · data syncs from Google Sheets</footer>
+    </div>
+
+    <!-- ── ADD / EDIT PERSON MODAL ── -->
+    <div class="modal-overlay" id="personModal">
+        <div class="modal">
+            <h2 class="modal-title" id="personModalTitle">Add Person</h2>
+            <p class="modal-sub" id="personModalSub">Fill in details to create a new member record.</p>
+            <input type="hidden" id="editPersonId">
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Person ID *</label>
+                    <input class="form-input" id="fId" placeholder="RBX-CEO-0001"
+                        style="font-family:monospace;text-transform:uppercase;">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Category *</label>
+                    <select class="form-select" id="fCategory">
+                        <option value="">Select...</option>
+                        <option value="Founder">Founder</option>
+                        <option value="Co-Founder">Co-Founder</option>
+                        <option value="CoreMember">Core Member</option>
+                        <option value="Employee">Employee</option>
+                        <option value="Freelancer">Freelancer</option>
+                        <option value="Investor">Investor</option>
+                        <option value="EquityHolder">Equity Holder</option>
+                        <option value="FriendFamily">Friend / Family</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Full Name *</label>
+                <input class="form-input" id="fName" placeholder="Rahul Kumar">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Email *</label>
+                <input class="form-input" id="fEmail" type="email" placeholder="rahul@raskbind.com">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Account Number *</label>
+                <input class="form-input" id="fAccountNo" placeholder="110202006399" style="font-family:monospace;">
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Account Holder Name *</label>
+                    <input class="form-input" id="fAccountHolder" placeholder="RAHUL KUMAR"
+                        style="text-transform:uppercase;">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">IFSC Code *</label>
+                    <input class="form-input" id="fIFSC" placeholder="CNRB0004950"
+                        style="font-family:monospace;text-transform:uppercase;">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Equity % (0 if none)</label>
+                    <input class="form-input" id="fEquity" type="number" placeholder="0" min="0" max="100" step="0.01">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Active</label>
+                    <select class="form-select" id="fActive">
+                        <option value="Yes">Yes</option>
+                        <option value="No">No</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Profile Image URL (optional)</label>
+                <input class="form-input" id="fImageUrl" type="url" placeholder="https://...">
+            </div>
+            <div class="modal-error" id="personModalError"></div>
+            <div class="modal-actions">
+                <button class="btn ghost" id="personModalCancel">Cancel</button>
+                <button class="btn primary" id="personModalSave">Save Person</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── ADMIN CONFIRM MODAL ── -->
+    <div class="modal-overlay" id="adminModal">
+        <div class="modal">
+            <div class="admin-icon">🔑</div>
+            <h2 class="modal-title" id="adminModalTitle">Admin Verification</h2>
+            <p class="modal-sub" id="adminModalSub">Enter the admin action password to continue.</p>
+            <div class="form-group">
+                <label class="form-label">Admin Password</label>
+                <input class="form-input" id="adminPassInput" type="password" placeholder="••••••••" autocomplete="off">
+            </div>
+            <div class="modal-error" id="adminModalError"></div>
+            <div class="modal-actions">
+                <button class="btn ghost" id="adminModalCancel">Cancel</button>
+                <button class="btn primary" id="adminModalConfirm">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ── CONFIG ────────────────────────────────────────────────────
+        const API_URL = "https://script.google.com/macros/s/AKfycbzS8cCiQF1S6F2cBHM2BohgD2SIEf1r9vQX-Kzrw3VesRjR8-HaFDWTwr8qfv5yqD15/exec";
+
+        // Company logo — paste any image URL (Google Drive, direct link, etc.)
+        // Leave empty ("") to show the default "RX" text mark.
+        const LOGO_URL = "icon.png";  // e.g. "https://drive.google.com/uc?export=view&id=YOUR_FILE_ID"
+
+        // ── AUTH ──────────────────────────────────────────────────────
+        let authToken = sessionStorage.getItem('rbx_token') || null;
+
+        // ── LOGO INJECTION ────────────────────────────────────────────
+        function applyLogo() {
+            const url = fixImageUrl(LOGO_URL);
+            if (!url) return; // keep "RX" text fallback
+            const img = `<img src="${url}" alt="Logo" onerror="this.parentElement.innerHTML='RX'">`;
+            const lockMark = document.getElementById('lockLogoMark');
+            const hdrLogo = document.getElementById('headerLogo');
+            if (lockMark) lockMark.innerHTML = img;
+            if (hdrLogo) hdrLogo.innerHTML = img;
+        }
+        applyLogo();
+
+        function tryUnlock(password) {
+            const btn = document.getElementById('unlockBtn');
+            const err = document.getElementById('lockError');
+            btn.disabled = true; btn.textContent = "Checking..."; err.textContent = "";
+            fetch(API_URL, { method: "POST", body: JSON.stringify({ action: "authenticate", password }) })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.ok && data.token) {
+                        authToken = data.token;
+                        sessionStorage.setItem('rbx_token', authToken);
+                        showDashboard();
+                    } else {
+                        showLockError("Incorrect key. Try again.");
+                    }
+                })
+                .catch(() => showLockError("Connection error. Check internet."))
+                .finally(() => { btn.disabled = false; btn.textContent = "Unlock Dashboard"; });
+        }
+
+        function showLockError(msg) {
+            const inp = document.getElementById('passInput');
+            document.getElementById('lockError').textContent = msg;
+            inp.value = "";
+            inp.classList.add('shake');
+            setTimeout(() => inp.classList.remove('shake'), 400);
+        }
+
+        function showDashboard() {
+            document.getElementById('lockScreen').style.display = 'none';
+            document.getElementById('dashboardApp').style.display = 'block';
+            loadData();
+        }
+
+        function lockOut() {
+            authToken = null; sessionStorage.removeItem('rbx_token');
+            document.getElementById('lockScreen').style.display = 'flex';
+            document.getElementById('dashboardApp').style.display = 'none';
+            document.getElementById('passInput').value = '';
+            document.getElementById('lockError').textContent = '';
+        }
+
+        if (authToken) {
+            fetch(API_URL + "?token=" + encodeURIComponent(authToken))
+                .then(r => r.json())
+                .then(data => { if (data.error === 'Unauthorized') lockOut(); else showDashboard(); })
+                .catch(() => showDashboard());
+        }
+
+        document.getElementById('unlockBtn').addEventListener('click', () => {
+            const val = document.getElementById('passInput').value.trim();
+            if (val) tryUnlock(val);
+        });
+        document.getElementById('passInput').addEventListener('keydown', e => {
+            if (e.key === 'Enter') document.getElementById('unlockBtn').click();
+        });
+        document.getElementById('lockOutBtn').addEventListener('click', lockOut);
+
+        // ── AVATAR ────────────────────────────────────────────────────
+        const AVATAR_COLORS = [
+            ['#e65100', '#FF6B00'], ['#1565c0', '#1976d2'], ['#2e7d32', '#388e3c'],
+            ['#6a1b9a', '#7b1fa2'], ['#c62828', '#d32f2f'], ['#00838f', '#00acc1'],
+            ['#4e342e', '#6d4c41'], ['#283593', '#3949ab']
+        ];
+        function getAvatarColor(name) {
+            let h = 0; for (let c of name) h = (h * 31 + c.charCodeAt(0)) % AVATAR_COLORS.length;
+            return AVATAR_COLORS[h];
+        }
+        function initials(name) {
+            return name.split(' ').filter(Boolean).slice(0, 2).map(w => w[0].toUpperCase()).join('');
+        }
+        function extractDriveId(url) {
+            if (!url) return null;
+            url = String(url).trim();
+            // Full sharing URL: https://drive.google.com/file/d/FILE_ID/view?usp=sharing
+            const fileMatch = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+            if (fileMatch) return fileMatch[1];
+            // Open URL: https://drive.google.com/open?id=FILE_ID
+            const idMatch = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+            if (idMatch) return idMatch[1];
+            // Raw file ID only (25+ alphanumeric chars, no spaces or slashes)
+            if (/^[a-zA-Z0-9_-]{25,}$/.test(url)) return url;
+            return null;
+        }
+
+        function fixImageUrl(url) {
+            if (!url) return '';
+            const id = extractDriveId(url);
+            if (id) {
+                // Google Drive thumbnail API — works reliably in <img> tags for publicly shared files
+                return 'https://drive.google.com/thumbnail?id=' + id + '&sz=w200-h200';
+            }
+            // Non-Drive URL — use as-is
+            return String(url).trim();
+        }
+
+        function buildAvatar(p) {
+            const [c1, c2] = getAvatarColor(p.name || 'X');
+            const ini = initials(p.name || '?');
+            const fallbackStyle = `background:linear-gradient(135deg,${c1},${c2});`;
+            const imgUrl = fixImageUrl(p.imageUrl);
+            if (imgUrl) {
+                return `<div class="avatar" id="av-${p.id}" style="${fallbackStyle}">` +
+                    `<img src="${imgUrl}" alt="${ini}" ` +
+                    `style="width:100%;height:100%;object-fit:cover;border-radius:50%;display:block;" ` +
+                    `onerror="this.style.display='none';this.parentElement.textContent='${ini}';">` +
+                    `</div>`;
+            }
+            return `<div class="avatar" style="${fallbackStyle}">${ini}</div>`;
+        }
+
+        // ── HELPERS ───────────────────────────────────────────────────
+        function fmtINR(n) { return "₹" + Number(n || 0).toLocaleString('en-IN'); }
+        function maskAcct(n) { n = String(n); return "•••• " + n.slice(-4); }
+        function pillClass(s) { return s === "Paid" ? "pill paid" : s === "Pending" ? "pill pending" : "pill none"; }
+
+        let allPeople = [], selectedMonth = null;
+
+        // ── STATS ─────────────────────────────────────────────────────
+        function renderStats(s) {
+            const sel = document.getElementById('monthBadge');
+            const months = s.availableMonths?.length ? s.availableMonths : [s.month];
+            sel.innerHTML = months.map(m => `<option value="${m}"${m === s.month ? ' selected' : ''}>${m}</option>`).join('');
+            selectedMonth = s.month;
+            document.getElementById('statRevenue').textContent = fmtINR(s.revenue);
+            document.getElementById('statProfit').textContent = fmtINR(s.netProfit);
+            document.getElementById('statMargin').textContent = (s.margin || 0) + "%";
+            document.getElementById('statAmount').textContent = fmtINR(s.pendingAmount);
+            document.getElementById('statPaid').textContent = fmtINR(s.paidThisMonth);
+            document.getElementById('statRemaining').textContent = fmtINR(s.remainingAfterAllPayouts);
+        }
+
+        // ── GRID ──────────────────────────────────────────────────────
+        function renderGrid() {
+            const idQ = document.getElementById('idSearch').value.toLowerCase().trim();
+            const nameQ = document.getElementById('searchBox').value.toLowerCase();
+            const cat = document.getElementById('categoryFilter').value;
+            const stat = document.getElementById('statusFilter').value;
+            const filtered = allPeople.filter(p => {
+                if (idQ && !String(p.id).toLowerCase().includes(idQ)) return false;
+                if (nameQ && !p.name.toLowerCase().includes(nameQ)) return false;
+                if (cat && p.category !== cat) return false;
+                if (stat && p.currentStatus !== stat) return false;
+                return true;
+            });
+            document.getElementById('countLabel').textContent = `People Directory · ${filtered.length} of ${allPeople.length}`;
+            const grid = document.getElementById('peopleGrid');
+            const empty = document.getElementById('emptyState');
+            grid.innerHTML = "";
+            if (!filtered.length) { empty.style.display = "block"; return; }
+            empty.style.display = "none";
+
+            filtered.forEach(p => {
+                const card = document.createElement('div');
+                card.className = "card";
+
+                const statusPill = (p.pendingTxns?.length)
+                    ? `<span class="pill pending">${p.pendingTxns.length} Pending</span>`
+                    : `<span class="${pillClass(p.currentStatus)}">${p.currentStatus}</span>`;
+
+                const pendingListHtml = (p.pendingTxns?.length)
+                    ? `<div class="pending-list">${p.pendingTxns.map(t => `
+          <div class="pending-row">
+            <div class="pending-info">
+              <span class="pm">${t.month}${t.dueDate ? ' · Due ' + t.dueDate : ''}</span>
+              <span class="pa">${fmtINR(t.amount)}</span>
+            </div>
+            <button class="btn primary sm mark-paid-row" data-txn="${t.txnId}">Mark paid</button>
+          </div>`).join('')}</div>` : '';
+
+                const histHtml = (p.history?.length)
+                    ? p.history.map(h => `<div class="hist-row"><span>${h.Month}</span><span>${fmtINR(h.Amount)} · ${h.Status}</span></div>`).join('')
+                    : `<div class="hist-row"><span style="color:var(--gold)">No past records</span></div>`;
+
+                card.innerHTML = `
+      <div class="card-header">
+        ${buildAvatar(p)}
+        <div class="card-meta">
+          <div class="card-name">${p.name}</div>
+          <div class="card-cat">${p.category}${p.equityPct ? ' · ' + p.equityPct + '% equity' : ''}</div>
+        </div>
+        <div class="card-badges">
+          <span class="id-tag">${p.id}</span>
+          ${statusPill}
+        </div>
+      </div>
+      ${pendingListHtml}
+      <div class="acct-row">
+        <span class="acct-num" data-full="${p.accountNo}" data-masked="${maskAcct(p.accountNo)}">${maskAcct(p.accountNo)}</span>
+        <button class="reveal-btn">show</button>
+      </div>
+      <div class="details-panel">
+        <div class="d-row"><span class="dk">Email</span><span>${p.email}</span></div>
+        <div class="d-row"><span class="dk">Account holder</span><span>${p.accountHolder}</span></div>
+        <div class="d-row"><span class="dk">IFSC</span><span>${p.ifsc}</span></div>
+        <div class="d-row"><span class="dk">Equity</span><span>${p.equityPct ? p.equityPct + '%' : '—'}</span></div>
+        <div class="d-row"><span class="dk">Status</span><span>${p.active}</span></div>
+        <div class="hist-title">Recent History</div>
+        ${histHtml}
+      </div>
+      <div class="card-actions">
+        <button class="btn ghost toggle-details">Details</button>
+        <button class="btn edit edit-person-btn" data-id="${p.id}">✏️ Edit</button>
+        <button class="btn danger remove-person-btn" data-id="${p.id}" data-name="${p.name}">✕ Remove</button>
+      </div>`;
+
+                // Account reveal
+                card.querySelector('.reveal-btn').addEventListener('click', e => {
+                    const span = card.querySelector('.acct-num');
+                    const hiding = e.target.textContent === "hide";
+                    span.textContent = hiding ? span.dataset.masked : span.dataset.full;
+                    e.target.textContent = hiding ? "show" : "hide";
+                });
+                // Details toggle
+                card.querySelector('.toggle-details').addEventListener('click', () => {
+                    card.querySelector('.details-panel').classList.toggle('open');
+                });
+                // Mark paid
+                card.querySelectorAll('.mark-paid-row').forEach(btn => {
+                    btn.addEventListener('click', () => markPaid(btn.dataset.txn, btn));
+                });
+                // Edit
+                card.querySelector('.edit-person-btn').addEventListener('click', () => openEditPerson(p));
+                // Remove
+                card.querySelector('.remove-person-btn').addEventListener('click', () => {
+                    if (confirm(`Remove ${p.name} (${p.id})? This cannot be undone.`)) {
+                        requireAdmin(() => doRemovePerson(p.id));
+                    }
+                });
+
+                grid.appendChild(card);
+            });
+        }
+
+        // ── MARK PAID ─────────────────────────────────────────────────
+        function markPaid(txnId, btn) {
+            if (!txnId) return;
+            btn.disabled = true; btn.textContent = "Saving...";
+            fetch(API_URL, { method: "POST", body: JSON.stringify({ action: "markPaid", txnId, txnRef: "", token: authToken }) })
+                .then(r => r.json())
+                .then(data => { if (data.error === 'Unauthorized') lockOut(); else loadData(selectedMonth); })
+                .catch(() => { btn.disabled = false; btn.textContent = "Mark paid"; alert("Could not save. Try again."); });
+        }
+
+        // ── LOAD DATA ─────────────────────────────────────────────────
+        function loadData(month) {
+            if (!authToken) return;
+            const url = API_URL + "?token=" + encodeURIComponent(authToken) + (month ? "&month=" + encodeURIComponent(month) : "");
+            fetch(url).then(r => r.json()).then(data => {
+                if (data.error === 'Unauthorized') { lockOut(); return; }
+                allPeople = data.people; renderStats(data.summary); renderGrid();
+            }).catch(() => { });
+        }
+
+        // ── ADMIN MODAL ───────────────────────────────────────────────
+        let adminCallback = null;
+
+        function requireAdmin(callback) {
+            adminCallback = callback;
+            document.getElementById('adminPassInput').value = '';
+            document.getElementById('adminModalError').textContent = '';
+            openModal('adminModal');
+        }
+
+        document.getElementById('adminModalConfirm').addEventListener('click', () => {
+            const pw = document.getElementById('adminPassInput').value.trim();
+            if (!pw) return;
+            const btn = document.getElementById('adminModalConfirm');
+            btn.disabled = true; btn.textContent = "Verifying...";
+            fetch(API_URL, { method: "POST", body: JSON.stringify({ action: "verifyAdmin", adminPassword: pw, token: authToken }) })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.ok) {
+                        closeModal('adminModal');
+                        if (adminCallback) adminCallback(pw);
+                    } else {
+                        document.getElementById('adminModalError').textContent = "Wrong admin password. Try again.";
+                        document.getElementById('adminPassInput').value = '';
+                    }
+                })
+                .catch(() => { document.getElementById('adminModalError').textContent = "Connection error."; })
+                .finally(() => { btn.disabled = false; btn.textContent = "Confirm"; });
+        });
+        document.getElementById('adminModalCancel').addEventListener('click', () => closeModal('adminModal'));
+        document.getElementById('adminPassInput').addEventListener('keydown', e => {
+            if (e.key === 'Enter') document.getElementById('adminModalConfirm').click();
+        });
+
+        // ── PERSON MODAL ──────────────────────────────────────────────
+        let personModalMode = 'add';
+
+        function openAddPerson() {
+            personModalMode = 'add';
+            document.getElementById('personModalTitle').textContent = 'Add New Person';
+            document.getElementById('personModalSub').textContent = 'Fill in details to create a new member record.';
+            document.getElementById('editPersonId').value = '';
+            ['fId', 'fName', 'fEmail', 'fAccountNo', 'fAccountHolder', 'fIFSC', 'fImageUrl'].forEach(id => document.getElementById(id).value = '');
+            document.getElementById('fEquity').value = '0';
+            document.getElementById('fCategory').value = '';
+            document.getElementById('fActive').value = 'Yes';
+            document.getElementById('fId').readOnly = false;
+            document.getElementById('personModalError').textContent = '';
+            openModal('personModal');
+        }
+
+        function openEditPerson(p) {
+            personModalMode = 'edit';
+            document.getElementById('personModalTitle').textContent = 'Edit Person';
+            document.getElementById('personModalSub').textContent = `Editing ${p.name} (${p.id})`;
+            document.getElementById('editPersonId').value = p.id;
+            document.getElementById('fId').value = p.id;
+            document.getElementById('fId').readOnly = true;
+            document.getElementById('fName').value = p.name;
+            document.getElementById('fCategory').value = p.category;
+            document.getElementById('fEmail').value = p.email;
+            document.getElementById('fAccountNo').value = p.accountNo;
+            document.getElementById('fAccountHolder').value = p.accountHolder;
+            document.getElementById('fIFSC').value = p.ifsc;
+            document.getElementById('fEquity').value = p.equityPct || 0;
+            document.getElementById('fActive').value = p.active || 'Yes';
+            document.getElementById('fImageUrl').value = p.imageUrl || '';
+            document.getElementById('personModalError').textContent = '';
+            openModal('personModal');
+        }
+
+        document.getElementById('addPersonBtn').addEventListener('click', () => {
+            requireAdmin(pw => { openAddPerson(); });
+        });
+
+        document.getElementById('personModalSave').addEventListener('click', () => {
+            const person = {
+                id: document.getElementById('fId').value.trim().toUpperCase(),
+                name: document.getElementById('fName').value.trim(),
+                category: document.getElementById('fCategory').value,
+                email: document.getElementById('fEmail').value.trim(),
+                accountNo: document.getElementById('fAccountNo').value.trim(),
+                accountHolder: document.getElementById('fAccountHolder').value.trim().toUpperCase(),
+                ifsc: document.getElementById('fIFSC').value.trim().toUpperCase(),
+                equityPct: parseFloat(document.getElementById('fEquity').value) || 0,
+                active: document.getElementById('fActive').value,
+                imageUrl: document.getElementById('fImageUrl').value.trim(),
+            };
+            const err = document.getElementById('personModalError');
+            if (!person.id || !person.name || !person.email || !person.accountNo || !person.accountHolder || !person.ifsc || !person.category) {
+                err.textContent = "Please fill all required (*) fields."; return;
+            }
+            err.textContent = '';
+            const btn = document.getElementById('personModalSave');
+            btn.disabled = true; btn.textContent = "Saving...";
+
+            requireAdmin(pw => {
+                const action = personModalMode === 'add' ? 'addPerson' : 'editPerson';
+                const body = { action, person, adminPassword: pw, token: authToken };
+                if (personModalMode === 'edit') body.personId = document.getElementById('editPersonId').value;
+                fetch(API_URL, { method: "POST", body: JSON.stringify(body) })
+                    .then(r => r.json())
+                    .then(data => {
+                        if (data.ok) { closeModal('personModal'); loadData(selectedMonth); }
+                        else { err.textContent = data.error || "Save failed. Try again."; }
+                    })
+                    .catch(() => { err.textContent = "Connection error."; })
+                    .finally(() => { btn.disabled = false; btn.textContent = "Save Person"; });
+            });
+        });
+
+        document.getElementById('personModalCancel').addEventListener('click', () => closeModal('personModal'));
+
+        function doRemovePerson(personId, adminPw) {
+            fetch(API_URL, { method: "POST", body: JSON.stringify({ action: "removePerson", personId, adminPassword: adminPw, token: authToken }) })
+                .then(r => r.json())
+                .then(data => { if (data.ok) loadData(selectedMonth); else alert("Remove failed: " + (data.error || "Unknown error")); })
+                .catch(() => alert("Connection error."));
+        }
+
+        // Override requireAdmin for remove to pass pw into callback
+        const _requireAdmin = requireAdmin;
+        function requireAdmin(callback) {
+            adminCallback = callback;
+            document.getElementById('adminPassInput').value = '';
+            document.getElementById('adminModalError').textContent = '';
+            openModal('adminModal');
+        }
+        // Fix: pass adminPw to remove callback
+        document.getElementById('adminModalConfirm').addEventListener('click', () => { }, { once: false });
+
+        // Rewrite remove button logic properly
+        document.addEventListener('click', e => {
+            const btn = e.target.closest('.remove-person-btn');
+            if (!btn) return;
+            const id = btn.dataset.id, name = btn.dataset.name;
+            if (!confirm(`Remove ${name} (${id})? This cannot be undone.`)) return;
+            adminCallback = (pw) => doRemovePerson(id, pw);
+            document.getElementById('adminPassInput').value = '';
+            document.getElementById('adminModalError').textContent = '';
+            openModal('adminModal');
+        });
+
+        // ── MODAL HELPERS ─────────────────────────────────────────────
+        function openModal(id) { document.getElementById(id).classList.add('open'); }
+        function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+        document.querySelectorAll('.modal-overlay').forEach(overlay => {
+            overlay.addEventListener('click', e => { if (e.target === overlay) overlay.classList.remove('open'); });
+        });
+
+        // ── EVENT LISTENERS ───────────────────────────────────────────
+        document.getElementById('monthBadge').addEventListener('change', e => loadData(e.target.value));
+        document.getElementById('idSearch').addEventListener('input', renderGrid);
+        document.getElementById('searchBox').addEventListener('input', renderGrid);
+        document.getElementById('categoryFilter').addEventListener('change', renderGrid);
+        document.getElementById('statusFilter').addEventListener('change', renderGrid);
+    </script>
+</body>
+
+</html>
